@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Photo Score — AI가 당신의 사진을 채점합니다</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --mint:#7CFFCB;
+  --blue:#72B8FF;
+  --orange:#FFB86C;
+  --red:#FF7979;
+  --bg:#0A0A0F;
+  --bg2:#0e0e16;
+  --surface:rgba(255,255,255,0.03);
+  --border:rgba(255,255,255,0.07);
+  --text:rgba(255,255,255,0.85);
+  --muted:rgba(255,255,255,0.35);
+}
+html{scroll-behavior:smooth;overflow-x:hidden}
+body{
+  background:var(--bg);
+  color:#fff;
+  font-family:'Noto Sans KR',sans-serif;
+  overflow-x:hidden;
+  cursor:none;
+}
+
+/* ───── CURSOR ───── */
+#cur{
+  position:fixed;width:10px;height:10px;border-radius:50%;
+  background:var(--mint);pointer-events:none;z-index:9999;
+  transform:translate(-50%,-50%);mix-blend-mode:difference;
+  transition:width .25s,height .25s;
+}
+#cur-ring{
+  position:fixed;width:36px;height:36px;border-radius:50%;
+  border:1px solid rgba(124,255,203,.4);pointer-events:none;z-index:9998;
+  transform:translate(-50%,-50%);transition:width .3s,height .3s;
+}
+body:has(a:hover) #cur,body:has(button:hover) #cur{width:20px;height:20px}
+body:has(a:hover) #cur-ring,body:has(button:hover) #cur-ring{width:56px;height:56px}
+
+/* ───── NOISE OVERLAY ───── */
+.noise{
+  position:fixed;inset:0;z-index:9990;pointer-events:none;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat:repeat;background-size:200px;
+}
+
+/* ───── SCANLINES ───── */
+.scanlines{
+  position:fixed;inset:0;z-index:9989;pointer-events:none;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.03) 3px,rgba(0,0,0,.03) 4px);
+}
+
+/* ───── SECTIONS ───── */
+section{position:relative;overflow:hidden}
+
+/* ═══════════════════════════════
+   HERO
+═══════════════════════════════ */
+#hero{
+  min-height:100vh;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;
+  background:var(--bg);text-align:center;
+  padding:0 24px;
+}
+
+.hero-grid-bg{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(124,255,203,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(124,255,203,.04) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 50%,black 30%,transparent 100%);
+  -webkit-mask-image:radial-gradient(ellipse 80% 60% at 50% 50%,black 30%,transparent 100%);
+}
+
+.hero-orb{
+  position:absolute;border-radius:50%;filter:blur(120px);pointer-events:none;
+  animation:orbFloat 8s ease-in-out infinite;
+}
+.orb1{width:600px;height:600px;background:rgba(124,255,203,.07);top:-100px;left:-200px;animation-delay:0s}
+.orb2{width:500px;height:500px;background:rgba(114,184,255,.07);bottom:-100px;right:-150px;animation-delay:-4s}
+@keyframes orbFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+
+.hero-eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.7rem;letter-spacing:.35em;color:var(--mint);
+  text-transform:uppercase;margin-bottom:32px;
+  opacity:0;transform:translateY(16px);
+  animation:up .8s .2s forwards;
+}
+.hero-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(5rem,14vw,13rem);
+  line-height:.92;letter-spacing:-.01em;
+  margin-bottom:8px;
+  opacity:0;transform:translateY(30px);
+  animation:up .9s .35s forwards;
+}
+.hero-title .t1{display:block;color:#fff}
+.hero-title .t2{
+  display:block;
+  background:linear-gradient(90deg,var(--mint),var(--blue) 50%,var(--mint));
+  background-size:200% auto;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+  animation:shimmer 4s 1.2s linear infinite,up .9s .35s forwards;
+}
+@keyframes shimmer{0%{background-position:0}100%{background-position:200%}}
+.hero-sub{
+  font-size:clamp(.95rem,2vw,1.2rem);color:var(--muted);
+  line-height:1.8;max-width:520px;margin:24px auto 52px;
+  opacity:0;transform:translateY(16px);
+  animation:up .8s .6s forwards;
+}
+@keyframes up{to{opacity:1;transform:translateY(0)}}
+
+.hero-cta-wrap{
+  display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+  opacity:0;transform:translateY(16px);
+  animation:up .8s .8s forwards;
+}
+.btn-main{
+  padding:16px 44px;border:none;border-radius:0;
+  background:var(--mint);color:#0A0A0F;
+  font-family:'IBM Plex Mono',monospace;font-size:.8rem;
+  font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  cursor:none;transition:transform .25s,box-shadow .25s;
+  text-decoration:none;display:inline-block;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+}
+.btn-main:hover{transform:scale(1.04);box-shadow:0 0 40px rgba(124,255,203,.3)}
+.btn-ghost{
+  padding:16px 44px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;font-size:.8rem;
+  letter-spacing:.12em;text-transform:uppercase;cursor:none;
+  transition:border-color .25s,color .25s;
+  text-decoration:none;display:inline-block;
+}
+.btn-ghost:hover{border-color:var(--mint);color:var(--mint)}
+
+.scroll-indicator{
+  position:absolute;bottom:40px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;
+  letter-spacing:.3em;color:rgba(255,255,255,.2);
+  opacity:0;animation:up 1s 1.4s forwards;
+}
+.scroll-bar{
+  width:1px;height:50px;
+  background:linear-gradient(var(--mint),transparent);
+  animation:scrollPulse 2s ease-in-out infinite;
+}
+@keyframes scrollPulse{0%,100%{transform:scaleY(1);opacity:.4}50%{transform:scaleY(1.4);opacity:1}}
+
+/* 점수 미리보기 링 */
+.hero-ring-demo{
+  width:180px;height:180px;position:relative;margin:0 auto 48px;
+  opacity:0;transform:scale(.7) rotate(-10deg);
+  animation:ringIn .9s .45s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes ringIn{to{opacity:1;transform:scale(1) rotate(0deg)}}
+.hero-ring-demo svg{transform:rotate(-90deg)}
+
+/* ═══════════════════════════════
+   STATS TICKER
+═══════════════════════════════ */
+#ticker{
+  background:var(--mint);color:#0A0A0F;
+  padding:14px 0;overflow:hidden;
+  position:relative;z-index:2;
+}
+.ticker-track{
+  display:flex;gap:0;
+  animation:tickerScroll 18s linear infinite;
+  width:max-content;
+}
+@keyframes tickerScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ticker-item{
+  font-family:'IBM Plex Mono',monospace;font-size:.75rem;
+  font-weight:600;letter-spacing:.08em;
+  white-space:nowrap;padding:0 32px;
+  border-right:1px solid rgba(0,0,0,.15);
+}
+
+/* ═══════════════════════════════
+   CATEGORIES
+═══════════════════════════════ */
+#categories{
+  background:var(--bg2);
+  padding:120px 40px;
+}
+.section-label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.65rem;letter-spacing:.4em;
+  color:var(--mint);text-transform:uppercase;margin-bottom:14px;
+}
+.section-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(2.4rem,5vw,5rem);
+  font-weight:400;line-height:1.1;color:#fff;
+}
+.section-title em{font-style:italic;color:var(--mint)}
+
+.cat-header{max-width:1200px;margin:0 auto 72px}
+
+.cat-grid{
+  max-width:1200px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(7,1fr);
+  gap:1px;background:var(--border);
+  border:1px solid var(--border);
+}
+.cat-cell{
+  background:var(--bg2);padding:28px 20px;
+  transition:background .3s,transform .3s;
+  cursor:default;position:relative;overflow:hidden;
+  opacity:0;transform:translateY(30px) scale(.96);
+}
+.cat-cell.revealed{
+  animation:cellIn .6s cubic-bezier(.23,1,.32,1) forwards;
+}
+@keyframes cellIn{to{opacity:1;transform:translateY(0) scale(1)}}
+.cat-cell::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(124,255,203,.06),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.cat-cell:hover{background:rgba(124,255,203,.03)}
+.cat-cell:hover::before{opacity:1}
+.cat-cell:hover .cat-num{color:var(--mint)}
+.cat-cell:hover .cat-bar-fill{width:100% !important}
+
+.cat-icon{font-size:1.6rem;margin-bottom:16px;display:block}
+.cat-name{
+  font-family:'Instrument Serif',serif;
+  font-size:1.15rem;font-weight:400;color:#fff;
+  margin-bottom:6px;
+}
+.cat-desc{font-size:.72rem;color:var(--muted);line-height:1.5;margin-bottom:16px}
+.cat-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:2.2rem;color:rgba(255,255,255,.15);
+  transition:color .3s;
+}
+.cat-bar{
+  position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:rgba(255,255,255,.05);
+}
+.cat-bar-fill{
+  height:100%;width:0;
+  background:linear-gradient(90deg,var(--mint),var(--blue));
+  transition:width .8s cubic-bezier(.23,1,.32,1);
+}
+
+/* ═══════════════════════════════
+   HOW IT WORKS
+═══════════════════════════════ */
+#howitworks{
+  background:var(--bg);
+  padding:120px 40px;
+}
+.how-inner{max-width:1100px;margin:0 auto}
+.how-header{margin-bottom:80px}
+
+.how-steps{display:flex;flex-direction:column;gap:0}
+.how-step{
+  display:grid;grid-template-columns:80px 1fr;gap:40px;
+  padding:48px 0;border-bottom:1px solid var(--border);
+  align-items:start;
+  opacity:0;transform:translateX(-50px);
+}
+.how-step.revealed{
+  animation:slideR .7s cubic-bezier(.23,1,.32,1) forwards;
+}
+@keyframes slideR{to{opacity:1;transform:translateX(0)}}
+.how-step:last-child{border-bottom:none}
+
+.step-num-big{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:4.5rem;line-height:1;
+  color:rgba(255,255,255,.06);
+  transition:color .3s;
+}
+.how-step:hover .step-num-big{color:rgba(124,255,203,.2)}
+.step-body{}
+.step-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(1.4rem,2.5vw,2.2rem);
+  font-weight:400;color:#fff;margin-bottom:14px;
+}
+.step-desc{
+  font-size:.95rem;line-height:1.8;color:var(--muted);
+  max-width:560px;
+}
+.step-tag{
+  display:inline-block;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.62rem;letter-spacing:.15em;
+  padding:5px 12px;border:1px solid rgba(124,255,203,.3);
+  color:var(--mint);margin-bottom:16px;
+}
+
+/* ═══════════════════════════════
+   SCORE EXPLAINER (인터랙티브)
+═══════════════════════════════ */
+#explainer{
+  background:var(--bg2);
+  padding:120px 40px;
+}
+.expl-inner{
+  max-width:1100px;margin:0 auto;
+  display:grid;grid-template-columns:1fr 480px;
+  gap:80px;align-items:center;
+}
+.expl-text .section-title{margin-bottom:24px}
+.expl-text p{font-size:1rem;line-height:1.85;color:var(--muted);margin-bottom:16px}
+
+.grade-showcase{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.grade-card{
+  padding:20px 16px;border:1px solid var(--border);
+  text-align:center;transition:transform .3s,border-color .3s,box-shadow .3s;
+  opacity:0;transform:translateY(20px) scale(.95);
+  cursor:default;
+}
+.grade-card.revealed{
+  animation:cardIn .5s cubic-bezier(.23,1,.32,1) forwards;
+}
+@keyframes cardIn{to{opacity:1;transform:translateY(0) scale(1)}}
+.grade-card:hover{
+  transform:translateY(-6px) scale(1.04) !important;
+  box-shadow:0 12px 40px rgba(0,0,0,.3);
+}
+.grade-letter{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:3rem;line-height:1;margin-bottom:6px;
+}
+.grade-range{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.65rem;color:var(--muted);letter-spacing:.1em;
+}
+.grade-desc{font-size:.75rem;color:var(--muted);margin-top:6px;line-height:1.4}
+
+/* ═══════════════════════════════
+   FEATURE STACK (세로 스택)
+═══════════════════════════════ */
+#features{
+  background:var(--bg);
+  padding:120px 40px;
+}
+.feat-inner{max-width:1100px;margin:0 auto}
+.feat-header{margin-bottom:80px}
+
+.feat-items{display:flex;flex-direction:column;gap:0}
+.feat-item{
+  display:grid;grid-template-columns:1fr 1fr;
+  min-height:360px;border:1px solid var(--border);
+  margin-bottom:16px;overflow:hidden;
+  opacity:0;transform:scale(.97);
+  transition:transform .4s,box-shadow .4s;
+}
+.feat-item.revealed{animation:scaleIn .7s cubic-bezier(.23,1,.32,1) forwards}
+@keyframes scaleIn{to{opacity:1;transform:scale(1)}}
+.feat-item:hover{transform:scale(1.01) !important;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+
+.feat-vis{
+  position:relative;display:flex;
+  align-items:center;justify-content:center;
+  min-height:300px;overflow:hidden;
+}
+.feat-txt{
+  padding:48px 44px;display:flex;
+  flex-direction:column;justify-content:center;
+}
+.feat-num{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:6rem;color:rgba(255,255,255,.04);
+  line-height:1;margin-bottom:-10px;
+}
+.feat-title{
+  font-family:'Instrument Serif',serif;
+  font-size:clamp(1.4rem,2.5vw,2.2rem);
+  color:#fff;margin-bottom:18px;line-height:1.2;
+}
+.feat-desc{font-size:.92rem;line-height:1.85;color:var(--muted)}
+
+/* 비주얼 1: 히스토그램 */
+.vis-histogram{
+  width:100%;padding:32px;
+  display:flex;align-items:flex-end;gap:3px;height:180px;
+}
+.hist-bar{
+  flex:1;border-radius:2px 2px 0 0;
+  background:linear-gradient(180deg,var(--mint),rgba(124,255,203,.2));
+  transform:scaleY(0);transform-origin:bottom;
+  animation:barUp 1s cubic-bezier(.23,1,.32,1) forwards;
+}
+@keyframes barUp{to{transform:scaleY(1)}}
+
+/* 비주얼 2: 구도 그리드 */
+.vis-grid-comp{
+  width:240px;height:200px;
+  position:relative;border:1px solid rgba(124,255,203,.2);
+}
+.grid-line-h{
+  position:absolute;left:0;right:0;height:1px;
+  background:rgba(124,255,203,.25);
+}
+.grid-line-v{
+  position:absolute;top:0;bottom:0;width:1px;
+  background:rgba(124,255,203,.25);
+}
+.grid-dot{
+  position:absolute;width:10px;height:10px;border-radius:50%;
+  background:var(--mint);transform:translate(-50%,-50%);
+  box-shadow:0 0 14px var(--mint);
+  animation:dotPulse 2s ease-in-out infinite;
+}
+@keyframes dotPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.8}50%{transform:translate(-50%,-50%) scale(1.5);opacity:1}}
+.grid-label{
+  position:absolute;bottom:-24px;left:0;right:0;text-align:center;
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;
+  color:var(--mint);letter-spacing:.15em;
+}
+
+/* 비주얼 3: 심도 맵 */
+.vis-depth{
+  width:240px;height:180px;position:relative;
+  background:linear-gradient(90deg,rgba(114,184,255,.15),rgba(124,255,203,.3) 50%,rgba(114,184,255,.15));
+  border-radius:4px;overflow:hidden;
+}
+.depth-ring{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  border-radius:50%;border:1px solid;
+  animation:depthPulseRing 3s ease-in-out infinite;
+}
+@keyframes depthPulseRing{0%,100%{opacity:.3;transform:translate(-50%,-50%) scale(1)}50%{opacity:.8;transform:translate(-50%,-50%) scale(1.1)}}
+.depth-center{
+  position:absolute;top:50%;left:50%;
+  width:40px;height:40px;border-radius:50%;
+  background:var(--mint);
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 30px var(--mint);
+  animation:depthPulseRing 3s ease-in-out infinite;
+}
+
+/* 비주얼 4: 팁 카드 */
+.vis-tips{
+  width:260px;display:flex;flex-direction:column;gap:10px;
+}
+.tip-row{
+  padding:12px 16px;border:1px solid var(--border);
+  border-radius:4px;
+  display:flex;align-items:center;gap:12px;
+  background:rgba(255,255,255,.02);
+  opacity:0;transform:translateX(-20px);
+}
+.tip-row.tip-anim{animation:tipIn .5s cubic-bezier(.23,1,.32,1) forwards}
+@keyframes tipIn{to{opacity:1;transform:translateX(0)}}
+.tip-num{
+  width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-size:.6rem;font-weight:600;
+  flex-shrink:0;
+}
+.tip-text{font-size:.72rem;color:var(--muted);line-height:1.4}
+
+/* ═══════════════════════════════
+   PRIVACY CALLOUT
+═══════════════════════════════ */
+#privacy{
+  background:var(--mint);
+  padding:100px 40px;
+  position:relative;overflow:hidden;
+}
+#privacy::before{
+  content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.65' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");
+  mix-blend-mode:multiply;
+}
+.priv-inner{
+  max-width:1100px;margin:0 auto;
+  display:grid;grid-template-columns:1fr auto;
+  gap:60px;align-items:center;
+  position:relative;
+}
+.priv-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(3rem,7vw,7rem);
+  color:#0A0A0F;line-height:.92;
+}
+.priv-sub{
+  font-size:1.05rem;color:rgba(10,10,15,.6);
+  line-height:1.7;margin-top:20px;max-width:500px;
+}
+.priv-badges{
+  display:flex;flex-direction:column;gap:14px;
+  flex-shrink:0;
+}
+.priv-badge{
+  display:flex;align-items:center;gap:14px;
+  padding:16px 24px;
+  background:rgba(10,10,15,.08);
+  border-radius:2px;
+  opacity:0;transform:translateX(30px);
+}
+.priv-badge.revealed{animation:badgeIn .5s cubic-bezier(.23,1,.32,1) forwards}
+@keyframes badgeIn{to{opacity:1;transform:translateX(0)}}
+.priv-badge-icon{font-size:1.3rem}
+.priv-badge-txt{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.72rem;font-weight:600;
+  letter-spacing:.06em;color:#0A0A0F;
+}
+
+/* ═══════════════════════════════
+   MARQUEE CATEGORIES
+═══════════════════════════════ */
+#marquee-sec{
+  background:var(--bg2);
+  padding:80px 0;overflow:hidden;
+}
+.marquee-wrap{position:relative}
+.marquee-row{
+  display:flex;gap:0;
+  animation:marq 20s linear infinite;
+  width:max-content;margin-bottom:1px;
+}
+.marquee-row.rev{animation:marqRev 20s linear infinite}
+@keyframes marq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes marqRev{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+.marq-item{
+  display:flex;align-items:center;gap:16px;
+  padding:16px 32px;border-right:1px solid var(--border);
+  white-space:nowrap;
+}
+.marq-icon{font-size:1.2rem;opacity:.6}
+.marq-name{
+  font-family:'Instrument Serif',serif;
+  font-size:1.1rem;color:var(--muted);
+}
+.marq-score{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:.65rem;color:var(--mint);
+  letter-spacing:.1em;
+}
+
+/* ═══════════════════════════════
+   FINAL CTA
+═══════════════════════════════ */
+#cta{
+  background:var(--bg);
+  min-height:70vh;display:flex;
+  align-items:center;justify-content:center;
+  text-align:center;padding:80px 24px;
+  position:relative;
+}
+.cta-glow{
+  position:absolute;width:700px;height:700px;
+  background:radial-gradient(circle,rgba(124,255,203,.08) 0%,transparent 65%);
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  animation:glowPulse 4s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes glowPulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.7}50%{transform:translate(-50%,-50%) scale(1.3);opacity:1}}
+
+.cta-content{position:relative;z-index:1}
+.cta-title{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(3.5rem,10vw,10rem);
+  line-height:.9;color:#fff;margin-bottom:30px;
+}
+.cta-title span{color:var(--mint)}
+.cta-sub{font-size:1.05rem;color:var(--muted);line-height:1.8;margin-bottom:50px;max-width:440px;margin-left:auto;margin-right:auto}
+.cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+/* ───── FOOTER ───── */
+footer{
+  background:#060608;
+  padding:40px;display:flex;
+  align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:20px;
+}
+.footer-brand{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:1.4rem;letter-spacing:.05em;color:var(--muted);
+}
+.footer-brand span{color:var(--mint)}
+.footer-copy{font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.15);letter-spacing:.1em}
+
+/* ───── RESPONSIVE ───── */
+@media(max-width:960px){
+  .cat-grid{grid-template-columns:repeat(4,1fr)}
+  .expl-inner{grid-template-columns:1fr}
+  .feat-item{grid-template-columns:1fr}
+  .feat-vis{min-height:220px}
+  .priv-inner{grid-template-columns:1fr}
+  .priv-badges{flex-direction:row;flex-wrap:wrap}
+}
+@media(max-width:640px){
+  .cat-grid{grid-template-columns:repeat(2,1fr)}
+  body{cursor:auto}
+  #cur,#cur-ring{display:none}
+  #categories,#howitworks,#explainer,#features,#privacy,#cta{padding:80px 20px}
+}
+</style>
+</head>
+<body>
+
+<div id="cur"></div>
+<div id="cur-ring"></div>
+<div class="noise"></div>
+<div class="scanlines"></div>
+
+<!-- ═══ HERO ═══ -->
+<section id="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-orb orb1"></div>
+  <div class="hero-orb orb2"></div>
+
+  <p class="hero-eyebrow">✦ Velvitty(연이-Yeony) 제작 · 100% 로컬 분석 · 무료</p>
+
+  <!-- 점수 링 데모 -->
+  <div class="hero-ring-demo">
+    <svg width="180" height="180">
+      <circle cx="90" cy="90" r="76" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="8"/>
+      <circle id="heroRingCircle" cx="90" cy="90" r="76" fill="none" stroke="url(#rg)" stroke-width="8"
+        stroke-dasharray="477.5" stroke-dashoffset="477.5" stroke-linecap="round"
+        style="transition:stroke-dashoffset 1.6s cubic-bezier(.22,1,.36,1)"/>
+      <defs>
+        <linearGradient id="rg" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#7CFFCB"/>
+          <stop offset="100%" stop-color="#72B8FF"/>
+        </linearGradient>
+      </defs>
+    </svg>
+    <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <span id="heroNum" style="font-family:'Bebas Neue',sans-serif;font-size:3.5rem;line-height:1;color:#fff">0</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.15em">/ 100</span>
+    </div>
+  </div>
+
+  <h1 class="hero-title">
+    <span class="t1">Photo</span>
+    <span class="t2">Score</span>
+  </h1>
+
+  <p class="hero-sub">
+    당신의 사진을 7가지 기준으로 분석합니다.<br>
+    구도부터 창의성까지 — 점수와 개선 팁까지 한 번에.
+  </p>
+
+  <div class="hero-cta-wrap">
+    <a href="index.html" class="btn-main">지금 채점해보기 →</a>
+    <a href="#categories" class="btn-ghost">분석 기준 보기</a>
+  </div>
+
+  <div class="scroll-indicator">
+    <span>SCROLL</span>
+    <div class="scroll-bar"></div>
+  </div>
+</section>
+
+<!-- ═══ TICKER ═══ -->
+<div id="ticker">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<!-- ═══ CATEGORIES ═══ -->
+<section id="categories">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="cat-header reveal-fade">
+      <p class="section-label">✦ 7가지 분석 기준</p>
+      <h2 class="section-title">사진의 모든 것을<br><em>숫자로 말합니다</em></h2>
+    </div>
+    <div class="cat-grid" id="catGrid"></div>
+  </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section id="howitworks">
+  <div class="how-inner">
+    <div class="how-header reveal-fade">
+      <p class="section-label">✦ 사용 방법</p>
+      <h2 class="section-title">세 단계로<br><em>끝납니다</em></h2>
+    </div>
+    <div class="how-steps" id="howSteps"></div>
+  </div>
+</section>
+
+<!-- ═══ EXPLAINER ═══ -->
+<section id="explainer">
+  <div class="expl-inner">
+    <div class="expl-text reveal-fade">
+      <p class="section-label">✦ 채점 결과</p>
+      <h2 class="section-title">S부터 F까지<br><em>8단계 등급</em></h2>
+      <p>종합 점수와 함께 각 항목별 세부 점수를 확인하고, 어디가 강점이고 어디를 개선해야 하는지 한눈에 파악할 수 있습니다.</p>
+      <p>점수가 낮은 항목에 대해서는 <strong style="color:#fff">구체적인 촬영·후보정 팁</strong>을 제공합니다.</p>
+    </div>
+    <div class="grade-showcase" id="gradeShowcase"></div>
+  </div>
+</section>
+
+<!-- ═══ FEATURES ═══ -->
+<section id="features">
+  <div class="feat-inner">
+    <div class="feat-header reveal-fade">
+      <p class="section-label">✦ 핵심 기능</p>
+      <h2 class="section-title">엔진 안을<br><em>들여다보면</em></h2>
+    </div>
+    <div class="feat-items" id="featItems"></div>
+  </div>
+</section>
+
+<!-- ═══ MARQUEE ═══ -->
+<section id="marquee-sec">
+  <div class="marquee-wrap">
+    <div class="marquee-row" id="marq1"></div>
+    <div class="marquee-row rev" id="marq2"></div>
+  </div>
+</section>
+
+<!-- ═══ PRIVACY ═══ -->
+<section id="privacy">
+  <div class="priv-inner">
+    <div class="reveal-fade">
+      <h2 class="priv-title">YOUR PHOTO<br>NEVER LEAVES</h2>
+      <p class="priv-sub">사진이 서버로 전송되지 않습니다. 모든 분석은 브라우저의 Canvas API가 처리합니다. 로그인도, 계정도, 인터넷도 필요 없습니다.</p>
+    </div>
+    <div class="priv-badges" id="privBadges"></div>
+  </div>
+</section>
+
+<!-- ═══ CTA ═══ -->
+<section id="cta">
+  <div class="cta-glow"></div>
+  <div class="cta-content reveal-fade">
+    <h2 class="cta-title">지금<br>당신의<br><span>사진을</span><br>채점하세요</h2>
+    <p class="cta-sub">로그인 불필요 · 완전 무료 · 설치 없이 브라우저에서 바로</p>
+    <div class="cta-btns">
+      <a href="index.html" class="btn-main">Photo Score 시작하기 →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-brand">Photo <span>Score</span></div>
+  <div class="footer-copy">© 2026 VELVITTY (연이-YEONY). ALL RIGHTS RESERVED.</div>
+</footer>
+
+<script>
+/* ──── 커서 ──── */
+const cur = document.getElementById('cur');
+const curRing = document.getElementById('cur-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{
+  mx=e.clientX;my=e.clientY;
+  cur.style.left=mx+'px';cur.style.top=my+'px';
+});
+(function animRing(){
+  rx+=(mx-rx)*.12;ry+=(my-ry)*.12;
+  curRing.style.left=rx+'px';curRing.style.top=ry+'px';
+  requestAnimationFrame(animRing);
+})();
+
+/* ──── 히어로 링 애니메이션 ──── */
+const ringCircle = document.getElementById('heroRingCircle');
+const heroNum = document.getElementById('heroNum');
+const circ = 477.5;
+const targetScore = 87;
+setTimeout(()=>{
+  ringCircle.style.strokeDashoffset = circ - (targetScore/100)*circ;
+  let start=0,duration=1600,st=performance.now();
+  (function tick(now){
+    const p=Math.min((now-st)/duration,1);
+    const ease=1-Math.pow(1-p,3);
+    heroNum.textContent=Math.round(ease*targetScore);
+    if(p<1)requestAnimationFrame(tick);
+  })(performance.now());
+},600);
+
+/* ──── 티커 ──── */
+const tickerItems=[
+  '📸 구도 분석','◑ 노출 측정','◉ 피사체 감지','○ 보케/심도','◈ 색감 분석','◆ 선명도 측정','✦ 창의성 평가',
+  '🔒 서버 전송 없음','⚡ 즉시 분석','💯 무료 사용','🧠 픽셀 레벨 연산','📊 7가지 점수'
+];
+const tickerTrack = document.getElementById('tickerTrack');
+let html='';
+for(let i=0;i<2;i++) tickerItems.forEach(t=>{
+  html+=`<div class="ticker-item">${t}</div>`;
+});
+tickerTrack.innerHTML=html;
+
+/* ──── 카테고리 그리드 ──── */
+const cats=[
+  {icon:'◧',name:'구도',desc:'삼분법, 황금비율, 대각선, 나선형 등 7가지 구도 패턴 동시 분석',w:25},
+  {icon:'◑',name:'노출',desc:'히스토그램, 클리핑, 다이내믹 레인지 픽셀 레벨 측정',w:15},
+  {icon:'◉',name:'피사체',desc:'초점 분산 지수와 선명도 변이 계수로 주제 명확성 판단',w:20},
+  {icon:'○',name:'보케/심도',desc:'피사체-배경 분리비, 배경 절대 흐림값으로 심도 평가',w:10},
+  {icon:'◈',name:'색감',desc:'12구역 색조 히스토그램, 채도 표준편차로 색채 분석',w:15},
+  {icon:'◆',name:'선명도',desc:'라플라시안 필터 기반 고주파 에너지 측정',w:10},
+  {icon:'✦',name:'창의성',desc:'빛 드라마, 무드, 구도 의도 등 복합 지표 종합 평가',w:5},
+];
+const catGrid=document.getElementById('catGrid');
+cats.forEach((c,i)=>{
+  const el=document.createElement('div');
+  el.className='cat-cell';
+  el.style.animationDelay=(i*70)+'ms';
+  el.innerHTML=`
+    <span class="cat-icon">${c.icon}</span>
+    <div class="cat-name">${c.name}</div>
+    <div class="cat-desc">${c.desc}</div>
+    <div class="cat-num">${String(i+1).padStart(2,'0')}</div>
+    <div class="cat-bar"><div class="cat-bar-fill" data-w="${c.w}"></div></div>
+  `;
+  catGrid.appendChild(el);
+});
+
+/* ──── 스텝 ──── */
+const steps=[
+  {tag:'STEP 01',title:'사진을 업로드하세요',desc:'드래그 앤 드롭 또는 클릭으로 이미지를 올립니다. JPG, PNG, WEBP 모두 지원합니다. 파일은 서버로 전송되지 않고, 브라우저 메모리 안에서만 처리됩니다.',delay:0},
+  {tag:'STEP 02',title:'분석 시작 버튼을 누르세요',desc:'Canvas API가 이미지를 픽셀 단위로 읽어 노출, 구도 에너지 맵, 색조 히스토그램, 선명도 라플라시안 값 등을 실시간 계산합니다. 수 초면 완료됩니다.',delay:120},
+  {tag:'STEP 03',title:'점수와 팁을 확인하세요',desc:'7가지 항목 점수, 8단계 등급, 구체적인 촬영·후보정 개선 팁까지 한 번에 제공합니다. 퀵 팁은 실제 측정값 기반으로 생성되어, 당신의 사진에 딱 맞는 피드백입니다.',delay:240},
+];
+const howSteps=document.getElementById('howSteps');
+steps.forEach((s,i)=>{
+  const el=document.createElement('div');
+  el.className='how-step';
+  el.style.animationDelay=s.delay+'ms';
+  el.innerHTML=`
+    <div class="step-num-big">${String(i+1).padStart(2,'0')}</div>
+    <div class="step-body">
+      <span class="step-tag">${s.tag}</span>
+      <h3 class="step-title">${s.title}</h3>
+      <p class="step-desc">${s.desc}</p>
+    </div>
+  `;
+  howSteps.appendChild(el);
+});
+
+/* ──── 등급 카드 ──── */
+const grades=[
+  {g:'S+',range:'95+',col:'#FFD700',bg:'rgba(255,215,0,.08)',desc:'완벽에 가까운 사진'},
+  {g:'S',range:'90~94',col:'#FFD700',bg:'rgba(255,215,0,.06)',desc:'매우 뛰어난 완성도'},
+  {g:'A+',range:'85~89',col:'#7CFFCB',bg:'rgba(124,255,203,.08)',desc:'높은 수준의 작품'},
+  {g:'A',range:'80~84',col:'#7CFFCB',bg:'rgba(124,255,203,.06)',desc:'잘 찍힌 사진'},
+  {g:'B+',range:'75~79',col:'#72B8FF',bg:'rgba(114,184,255,.08)',desc:'평균 이상'},
+  {g:'B',range:'70~74',col:'#72B8FF',bg:'rgba(114,184,255,.06)',desc:'괜찮은 사진'},
+  {g:'C',range:'60~69',col:'#FFB86C',bg:'rgba(255,184,108,.06)',desc:'개선 여지 있음'},
+  {g:'D/F',range:'~59',col:'#FF7979',bg:'rgba(255,121,121,.06)',desc:'기초부터 다시'},
+];
+const gradeShowcase=document.getElementById('gradeShowcase');
+grades.forEach((g,i)=>{
+  const el=document.createElement('div');
+  el.className='grade-card';
+  el.style.animationDelay=(i*60)+'ms';
+  el.style.background=g.bg;
+  el.style.borderColor=g.col+'33';
+  el.innerHTML=`
+    <div class="grade-letter" style="color:${g.col}">${g.g}</div>
+    <div class="grade-range" style="color:${g.col}88">${g.range}점</div>
+    <div class="grade-desc">${g.desc}</div>
+  `;
+  gradeShowcase.appendChild(el);
+});
+
+/* ──── 피처 아이템 ──── */
+const feats=[
+  {
+    num:'01',title:'픽셀 레벨 노출 분석',
+    desc:'256단계 휘도 히스토그램을 구성하고 평균 밝기, 다이내믹 레인지, 섀도우/하이라이트 클리핑 비율을 정밀 측정합니다. 단순한 평균값이 아닌 분포 전체를 봅니다.',
+    visType:'histogram',delay:0
+  },
+  {
+    num:'02',title:'7종 구도 패턴 동시 탐지',
+    desc:'9×9 에너지 맵을 구성해 삼분법, 황금비율, 피보나치 나선, 대각선, 중앙집중, 대칭, 사다리꼴 구도를 동시에 분석합니다. 가장 잘 맞는 패턴을 자동 감지합니다.',
+    visType:'grid',delay:100
+  },
+  {
+    num:'03',title:'피사계 심도 & 보케 측정',
+    desc:'7×7 선명도 그리드로 피사체와 배경을 분리하고 분리 비율, 배경 절대 흐림값, 선명 면적 비율을 계산합니다. 실제 렌즈 심도를 수치로 측정합니다.',
+    visType:'depth',delay:200
+  },
+  {
+    num:'04',title:'데이터 기반 개인화 팁',
+    desc:'퀵 팁은 측정된 실제 수치(평균 밝기 128/255, 채도 34% 등)를 그대로 반영합니다. 추상적인 조언이 아닌, 당신의 사진에만 해당하는 구체적인 개선 방향을 제시합니다.',
+    visType:'tips',delay:300
+  },
+];
+const featItems=document.getElementById('featItems');
+feats.forEach((f,i)=>{
+  const el=document.createElement('div');
+  el.className='feat-item';
+  el.style.animationDelay=f.delay+'ms';
+  const isEven=i%2===0;
+
+  let visHtml='';
+  if(f.visType==='histogram'){
+    const bars=Array.from({length:32},(_,j)=>{
+      const h=Math.max(15,Math.round(Math.sin(j*0.3)*30+50+Math.random()*20));
+      return `<div class="hist-bar" style="height:${h}%;animation-delay:${j*30}ms"></div>`;
+    }).join('');
+    visHtml=`<div class="vis-histogram" style="background:rgba(124,255,203,.03);border-right:1px solid var(--border)">${bars}</div>`;
+  } else if(f.visType==='grid'){
+    visHtml=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:rgba(114,184,255,.03)">
+      <div class="vis-grid-comp">
+        <div class="grid-line-h" style="top:33.3%"></div>
+        <div class="grid-line-h" style="top:66.6%"></div>
+        <div class="grid-line-v" style="left:33.3%"></div>
+        <div class="grid-line-v" style="left:66.6%"></div>
+        <div class="grid-dot" style="top:33.3%;left:66.6%;animation-delay:.2s"></div>
+        <div class="grid-dot" style="top:66.6%;left:33.3%;width:7px;height:7px;opacity:.5;animation-delay:.5s"></div>
+        <div class="grid-label">삼분법 교차점</div>
+      </div>
+    </div>`;
+  } else if(f.visType==='depth'){
+    visHtml=`<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;background:rgba(114,184,255,.03)">
+      <div class="vis-depth">
+        <div class="depth-ring" style="width:180px;height:130px;border-color:rgba(114,184,255,.15)"></div>
+        <div class="depth-ring" style="width:120px;height:90px;border-color:rgba(124,255,203,.25);animation-delay:.5s"></div>
+        <div class="depth-ring" style="width:70px;height:50px;border-color:rgba(124,255,203,.5);animation-delay:1s"></div>
+        <div class="depth-center"></div>
+      </div>
+      <div style="margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--mint);letter-spacing:.15em">분리비 2.34×</div>
+    </div>`;
+  } else if(f.visType==='tips'){
+    const tips=[
+      {col:'#7CFFCB',bg:'rgba(124,255,203,.12)',text:'평균 밝기 142/255로 적정 노출입니다'},
+      {col:'#72B8FF',bg:'rgba(114,184,255,.12)',text:'삼분법 활용도 38%로 잘 배치되었어요'},
+      {col:'#FFB86C',bg:'rgba(255,184,108,.12)',text:'채도 22%로 약간 무미건조해요 — Vibrance +15'},
+    ];
+    const tipsHtml=tips.map((t,j)=>`
+      <div class="tip-row" id="tipRow${i}_${j}">
+        <div class="tip-num" style="background:${t.bg};color:${t.col}">${j+1}</div>
+        <div class="tip-text">${t.text}</div>
+      </div>`).join('');
+    visHtml=`<div style="display:flex;align-items:center;justify-content:center;height:100%;padding:24px;background:rgba(255,184,108,.02)">
+      <div class="vis-tips">${tipsHtml}</div>
+    </div>`;
+  }
+
+  const textBlock=`<div class="feat-txt">
+    <div class="feat-num">${f.num}</div>
+    <h3 class="feat-title">${f.title}</h3>
+    <p class="feat-desc">${f.desc}</p>
+  </div>`;
+  const visBlock=`<div class="feat-vis">${visHtml}</div>`;
+
+  el.innerHTML=isEven?visBlock+textBlock:textBlock+visBlock;
+  featItems.appendChild(el);
+});
+
+/* ──── 마키 ──── */
+const marqData=[
+  {icon:'◧',name:'구도 분석',score:'25%'},
+  {icon:'◑',name:'노출 측정',score:'15%'},
+  {icon:'◉',name:'피사체 감지',score:'20%'},
+  {icon:'○',name:'보케 심도',score:'10%'},
+  {icon:'◈',name:'색감 분석',score:'15%'},
+  {icon:'◆',name:'선명도',score:'10%'},
+  {icon:'✦',name:'창의성',score:'5%'},
+  {icon:'📊',name:'종합 점수',score:'100%'},
+];
+['marq1','marq2'].forEach(id=>{
+  const el=document.getElementById(id);
+  let h='';
+  for(let i=0;i<2;i++) marqData.forEach(m=>{
+    h+=`<div class="marq-item"><span class="marq-icon">${m.icon}</span><span class="marq-name">${m.name}</span><span class="marq-score">${m.score}</span></div>`;
+  });
+  el.innerHTML=h;
+});
+
+/* ──── 프라이버시 배지 ──── */
+const badges=[
+  {icon:'🔒',text:'서버 전송 없음'},
+  {icon:'🖥️',text:'100% 로컬 처리'},
+  {icon:'🚫',text:'로그인 불필요'},
+  {icon:'💰',text:'완전 무료'},
+];
+const privBadges=document.getElementById('privBadges');
+badges.forEach((b,i)=>{
+  const el=document.createElement('div');
+  el.className='priv-badge';
+  el.style.animationDelay=(i*100)+'ms';
+  el.innerHTML=`<span class="priv-badge-icon">${b.icon}</span><span class="priv-badge-txt">${b.text}</span>`;
+  privBadges.appendChild(el);
+});
+
+/* ──── IntersectionObserver ──── */
+const io=new IntersectionObserver(entries=>{
+  entries.forEach(entry=>{
+    if(!entry.isIntersecting) return;
+    const el=entry.target;
+
+    if(el.classList.contains('cat-cell')){
+      const idx=[...el.parentNode.children].indexOf(el);
+      el.style.animationDelay=(idx*65)+'ms';
+      el.classList.add('revealed');
+      // bar fill
+      setTimeout(()=>{
+        const fill=el.querySelector('.cat-bar-fill');
+        if(fill) fill.style.width=fill.dataset.w+'%';
+      },300+idx*65);
+    } else if(el.classList.contains('how-step')){
+      el.classList.add('revealed');
+    } else if(el.classList.contains('grade-card')){
+      const idx=[...el.parentNode.children].indexOf(el);
+      el.style.animationDelay=(idx*55)+'ms';
+      el.classList.add('revealed');
+    } else if(el.classList.contains('feat-item')){
+      el.classList.add('revealed');
+      // tip rows
+      el.querySelectorAll('.tip-row').forEach((r,j)=>{
+        setTimeout(()=>r.classList.add('tip-anim'),300+j*120);
+      });
+    } else if(el.classList.contains('priv-badge')){
+      el.classList.add('revealed');
+    } else if(el.classList.contains('reveal-fade')){
+      el.style.transition='opacity .7s ease, transform .7s cubic-bezier(.23,1,.32,1)';
+      el.style.opacity='1';
+      el.style.transform='translateY(0)';
+    }
+
+    io.unobserve(el);
+  });
+},{threshold:0.12});
+
+// 초기 숨김 설정
+document.querySelectorAll('.reveal-fade').forEach(el=>{
+  el.style.opacity='0';el.style.transform='translateY(40px)';
+  io.observe(el);
+});
+document.querySelectorAll('.cat-cell,.how-step,.grade-card,.feat-item,.priv-badge').forEach(el=>io.observe(el));
+
+/* ──── 패럴랙스 히어로 ──── */
+window.addEventListener('scroll',()=>{
+  const y=window.scrollY;
+  const heroContent=document.querySelector('#hero .hero-ring-demo');
+  if(heroContent){
+    heroContent.style.transform=`scale(${Math.max(.7,1-y/1500)}) translateY(${y*.15}px)`;
+  }
+},{passive:true});
+
+/* ──── 호버 on features 마우스 ──── */
+document.querySelectorAll('.feat-item').forEach(el=>{
+  el.addEventListener('mousemove',e=>{
+    const rect=el.getBoundingClientRect();
+    const x=(e.clientX-rect.left)/rect.width-.5;
+    const y=(e.clientY-rect.top)/rect.height-.5;
+    el.style.transform=`scale(1.01) perspective(800px) rotateY(${x*3}deg) rotateX(${-y*2}deg)`;
+  });
+  el.addEventListener('mouseleave',()=>{
+    el.style.transform='scale(1) perspective(800px) rotateY(0) rotateX(0)';
+  });
+});
+</script>
+</body>
+</html>
