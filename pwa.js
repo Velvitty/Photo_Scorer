@@ -11,11 +11,153 @@
   let reloading = false;
   let ready = false;
   const CONNECTION_MESSAGE = "인터넷 연결 상태가 불안정하여 어플리케이션을 실행할 수 없습니다. 네트워크 환경을 확인해 주세요.";
+  function installGlassLens(root) {
+    const doc = root.ownerDocument || root;
+    const glass = root.querySelector('.glass');
+    const backdrop = root.querySelector('.app-backdrop');
+    if (!glass || !backdrop || glass.querySelector('.lens-optics')) return;
+    const optics = doc.createElement('div');
+    optics.className = 'lens-optics';
+    optics.setAttribute('aria-hidden', 'true');
+    const replica = doc.createElement('div');
+    replica.className = 'lens-copy';
+    replica.inert = true;
+    const uiRoot = replica.attachShadow({mode: 'open'});
+    optics.append(replica);
+    const clip = doc.createElement('div');
+    clip.className = 'lens-clip';
+    clip.append(optics);
+    glass.prepend(clip);
+    const ns = 'http://www.w3.org/2000/svg';
+    const id = 'pwa-glass-lens-' + Math.random().toString(36).slice(2);
+    const svg = doc.createElementNS(ns, 'svg');
+    svg.setAttribute('width', '0');
+    svg.setAttribute('height', '0');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden;pointer-events:none';
+    const defs = doc.createElementNS(ns, 'defs');
+    const filter = doc.createElementNS(ns, 'filter');
+    filter.id = id;
+    filter.setAttribute('filterUnits', 'userSpaceOnUse');
+    filter.setAttribute('x', '0');
+    filter.setAttribute('y', '0');
+    filter.setAttribute('color-interpolation-filters', 'sRGB');
+    const map = doc.createElementNS(ns, 'feImage');
+    map.setAttribute('result', 'normal');
+    map.setAttribute('preserveAspectRatio', 'none');
+    filter.append(map);
+    const channels = [
+      ['r', 67, '1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'],
+      ['g', 64, '0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0'],
+      ['b', 61, '0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0']
+    ];
+    for (const [channel, scale, values] of channels) {
+      const displace = doc.createElementNS(ns, 'feDisplacementMap');
+      displace.setAttribute('in', 'SourceGraphic');
+      displace.setAttribute('in2', 'normal');
+      displace.setAttribute('scale', scale);
+      displace.setAttribute('xChannelSelector', 'R');
+      displace.setAttribute('yChannelSelector', 'G');
+      displace.setAttribute('result', channel + '-displaced');
+      const color = doc.createElementNS(ns, 'feColorMatrix');
+      color.setAttribute('in', channel + '-displaced');
+      color.setAttribute('values', values);
+      color.setAttribute('result', channel);
+      filter.append(displace, color);
+    }
+    const blendRG = doc.createElementNS(ns, 'feBlend');
+    blendRG.setAttribute('in', 'r');
+    blendRG.setAttribute('in2', 'g');
+    blendRG.setAttribute('mode', 'screen');
+    blendRG.setAttribute('result', 'rg');
+    const blendRGB = doc.createElementNS(ns, 'feBlend');
+    blendRGB.setAttribute('in', 'rg');
+    blendRGB.setAttribute('in2', 'b');
+    blendRGB.setAttribute('mode', 'screen');
+    filter.append(blendRG, blendRGB);
+    defs.append(filter);
+    svg.append(defs);
+    doc.body.append(svg);
+    const canvas = doc.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let previous = '';
+    let scheduled = false;
+    function update() {
+      scheduled = false;
+      const box = optics.getBoundingClientRect();
+      const w = Math.max(1, Math.ceil(box.width));
+      const h = Math.max(1, Math.ceil(box.height));
+      replica.style.width = (innerWidth + 10) + 'px';
+      replica.style.height = (innerHeight + 10) + 'px';
+      replica.style.left = (-box.left - 5) + 'px';
+      replica.style.top = (-box.top - 5) + 'px';
+      const size = w + ':' + h;
+      if (size === previous) return;
+      previous = size;
+      canvas.width = w;
+      canvas.height = h;
+      const image = ctx.createImageData(w, h);
+      const radius = Math.min(32, w / 2, h / 2);
+      const bevel = Math.min(28, w * .08, h * .08);
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        const dx = x + .5 - w / 2;
+        const dy = y + .5 - h / 2;
+        const qx = Math.abs(dx) - (w / 2 - radius);
+        const qy = Math.abs(dy) - (h / 2 - radius);
+        const ox = Math.max(qx, 0);
+        const oy = Math.max(qy, 0);
+        const length = Math.hypot(ox, oy);
+        const distance = Math.min(Math.max(qx, qy), 0) + length - radius;
+        let nx = 0, ny = 0;
+        if (length > 0) { nx = Math.sign(dx) * ox / length; ny = Math.sign(dy) * oy / length; }
+        else if (qx > qy) nx = Math.sign(dx); else ny = Math.sign(dy);
+        const edge = Math.max(0, Math.min(1, 1 + distance / bevel));
+        const bend = 18 * edge * edge * (2 - edge);
+        const shiftX = -nx * bend - dx * .012;
+        const shiftY = -ny * bend - dy * .012;
+        const p = (y * w + x) * 4;
+        image.data[p] = Math.max(0, Math.min(255, 128 + shiftX * 127 / 32));
+        image.data[p + 1] = Math.max(0, Math.min(255, 128 + shiftY * 127 / 32));
+        image.data[p + 2] = 128;
+        image.data[p + 3] = 255;
+      }
+      ctx.putImageData(image, 0, 0);
+      map.setAttribute('width', w);
+      map.setAttribute('height', h);
+      map.setAttribute('href', canvas.toDataURL('image/png'));
+      filter.setAttribute('width', w);
+      filter.setAttribute('height', h);
+      optics.style.filter = 'url("#' + id + '")';
+    }
+    function schedule() { if (!scheduled) { scheduled = true; requestAnimationFrame(update); } }
+    function copyStaticUI() {
+      try {
+        const page = backdrop.contentDocument;
+        if (!page?.documentElement) return;
+        const ui = doc.importNode(page.documentElement, true);
+        ui.querySelectorAll('script,iframe,object,embed,meta,base').forEach(node => node.remove());
+        for (const element of ui.querySelectorAll('*')) {
+          for (const attribute of [...element.attributes]) if (/^on/i.test(attribute.name)) element.removeAttribute(attribute.name);
+        }
+        for (const style of ui.querySelectorAll('style')) style.textContent = style.textContent.replace(/:root\b/g, 'html');
+        ui.inert = true;
+        uiRoot.replaceChildren(ui);
+        schedule();
+      } catch (_) { /* The border-only lens remains available if a snapshot is not ready. */ }
+    }
+    backdrop.addEventListener('load', copyStaticUI);
+    copyStaticUI();
+    if ('ResizeObserver' in window) new ResizeObserver(schedule).observe(glass);
+    addEventListener('resize', schedule, {passive: true});
+    schedule();
+  }
+  
   function connectionError() {
     if (document.querySelector('velvitty-pwa-connection-error')) return;
     const overlay = document.createElement('velvitty-pwa-connection-error');
     const root = overlay.attachShadow({mode: 'open'});
-    root.innerHTML = "<style>:host{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;box-sizing:border-box;padding:28px;background:#181818;color:#fff;font:16px/1.7 system-ui,-apple-system,\"Noto Sans KR\",sans-serif;text-align:center;isolation:isolate}\n*{box-sizing:border-box}.app-backdrop{position:fixed;inset:-5px;z-index:-2;width:calc(100% + 10px);height:calc(100% + 10px);border:0;pointer-events:none;opacity:.7;filter:none;background:#181818}.scene{position:fixed;inset:0;z-index:-1;background:#0008;pointer-events:none}\n.glass{position:relative;width:min(620px,100%);padding:38px 42px 34px;border:1px solid #ffffff66;border-radius:30px;background:linear-gradient(135deg,#ffffff21,#ffffff08 48%,#ffffff16);backdrop-filter:blur(8px) saturate(110%);-webkit-backdrop-filter:blur(8px) saturate(110%);box-shadow:0 24px 65px #0004,inset 1px 1px 0 #ffffff80,inset -1px -1px 0 #ffffff1c;pointer-events:none;filter:none;opacity:1}.glass:before{content:\"\";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(118deg,#ffffff26,transparent 27%,transparent 69%,#ffffff08)}.brand{position:relative;margin:0 0 28px;color:#eee;font-size:13px;font-weight:500;letter-spacing:.04em;overflow-wrap:anywhere;text-shadow:0 1px 3px #0004}.symbol{position:relative;display:grid;place-items:center;width:72px;height:72px;margin:0 auto 26px;border:1px solid #ffffff48;border-radius:23px;background:#ffffff0c;box-shadow:inset 0 1px 0 #ffffff40;color:#fff}.symbol svg{width:32px;height:32px}.primary{position:relative;margin:0;font-size:clamp(18px,2.8vw,23px);line-height:1.75;font-weight:600;letter-spacing:-.04em;word-break:keep-all;overflow-wrap:anywhere;text-shadow:0 1px 5px #0005}.secondary{position:relative;margin:20px 0 29px;color:#eee;font-size:15px;line-height:1.75;word-break:keep-all;text-shadow:0 1px 4px #0004}.retry-note{position:relative;margin:27px 0 0;color:#ddd;font-size:12px;line-height:1.8;word-break:keep-all;letter-spacing:-.02em;text-shadow:0 1px 3px #0004}.retry-surface{position:fixed;inset:0;z-index:2;width:100%;height:100%;margin:0;padding:0;border:0;background:transparent;cursor:pointer;outline:none}.retry-surface:focus-visible~.glass{outline:3px solid #fff;outline-offset:6px}\n@media(max-width:540px){:host{padding:20px}.glass{padding:28px 23px;border-radius:25px}.brand{margin-bottom:25px}.symbol{width:64px;height:64px;margin-bottom:23px}.secondary{font-size:14px;margin-top:17px;margin-bottom:25px}}\n</style><iframe class=\"app-backdrop\" src=\"./pwa-ui.html\" title=\"\" sandbox=\"\" tabindex=\"-1\" inert aria-hidden=\"true\"></iframe><button class=\"retry-surface\" type=\"button\" aria-label=\"연결을 다시 시도하려면 화면을 아무 곳이나 누르세요.\"></button><div class=\"scene\" aria-hidden=\"true\"></div><main class=\"glass\" role=\"alert\" aria-live=\"assertive\" aria-labelledby=\"connection-message\" aria-describedby=\"connection-guide\"><h1 class=\"brand\"></h1><div class=\"symbol\"><svg viewBox=\"0 0 32 32\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 11a20 20 0 0 1 5-3m6-1a20 20 0 0 1 13 4M8 16a13 13 0 0 1 5-2m6 0a13 13 0 0 1 5 2M12 21a7 7 0 0 1 8 0M16 26h.01M4 4l24 24\"/></svg></div><p class=\"primary\" id=\"connection-message\"></p><p class=\"secondary\" id=\"connection-guide\"></p><p class=\"retry-note\">연결을 다시 시도하려면 화면을 아무 곳이나 누르세요.</p></main>";
+    root.innerHTML = "<style>:host{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;box-sizing:border-box;padding:28px;background:#181818;color:#fff;font:16px/1.7 system-ui,-apple-system,\"Noto Sans KR\",sans-serif;text-align:center;isolation:isolate}\n*{box-sizing:border-box}.app-backdrop{position:fixed;inset:-5px;z-index:-2;width:calc(100% + 10px);height:calc(100% + 10px);border:0;pointer-events:none;opacity:.86;filter:none;background:#181818}.scene{position:fixed;inset:0;z-index:-1;background:#0007;pointer-events:none}\n.glass{--lens-radius:32px;position:relative;isolation:isolate;width:min(620px,100%);padding:38px 42px 34px;border:1px solid #ffffff9c;border-radius:var(--lens-radius);background:#ffffff04;box-shadow:0 30px 75px #0005,0 4px 0 #ffffff18,inset 0 2px 2px #ffffffb3,inset 0 -4px 5px #ffffff2b;pointer-events:none;filter:none;opacity:1}.lens-clip{position:absolute;inset:0;z-index:0;border-radius:inherit;overflow:hidden;pointer-events:none}.lens-optics{position:absolute;inset:0;z-index:0;border-radius:inherit;overflow:hidden;pointer-events:none;background:transparent;filter:brightness(.40)}.lens-copy{position:absolute;display:block;max-width:none;margin:0;padding:0;border:0;pointer-events:none;opacity:1;background:#181818;filter:brightness(.4)}.glass:before{content:\"\";position:absolute;z-index:2;inset:0;padding:2px;border-radius:inherit;pointer-events:none;background:conic-gradient(from 135deg at 50% 50%,#fff9,#b8f7ff80 12deg,#edc7ff70 23deg,#fff0 49deg,#fff0 96deg,#fff9 131deg,#fff0 165deg,#fff0 225deg,#ffd6c580 258deg,#b8eaff80 270deg,#fff8 285deg,#fff0 316deg,#fff9);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude}.glass:after{content:\"\";position:absolute;z-index:2;inset:-4px -3px -7px;border-radius:calc(var(--lens-radius) + 4px);border:1px solid #ffffff38;box-shadow:inset 0 -3px 4px #ffffff2e,0 4px 7px #0002;pointer-events:none}.brand{position:relative;z-index:3;margin:0 0 28px;color:#f4f4f4;font-size:13px;font-weight:500;letter-spacing:.04em;overflow-wrap:anywhere;text-shadow:0 1px 4px #0007}.symbol{position:relative;z-index:3;display:grid;place-items:center;width:72px;height:72px;margin:0 auto 26px;border:1px solid #ffffff70;border-radius:22px;background:linear-gradient(135deg,#ffffff14,#ffffff02);box-shadow:inset 0 1px 1px #ffffff70,inset 0 -2px 2px #ffffff20,0 3px 7px #0002;color:#fff}.symbol svg{width:32px;height:32px}.primary{position:relative;z-index:3;margin:0;font-size:clamp(18px,2.8vw,23px);line-height:1.75;font-weight:600;letter-spacing:-.04em;word-break:keep-all;overflow-wrap:anywhere;text-shadow:0 1px 5px #0008}.secondary{position:relative;z-index:3;margin:20px 0 29px;color:#f1f1f1;font-size:15px;line-height:1.75;word-break:keep-all;text-shadow:0 1px 4px #0007}.retry-note{position:relative;z-index:3;margin:27px 0 0;color:#e5e5e5;font-size:12px;line-height:1.8;word-break:keep-all;letter-spacing:-.02em;text-shadow:0 1px 3px #0006}.retry-surface{position:fixed;inset:0;z-index:5;width:100%;height:100%;margin:0;padding:0;border:0;background:transparent;cursor:pointer;outline:none}.retry-surface:focus-visible~.glass{outline:3px solid #fff;outline-offset:10px}\n@media(max-width:540px){:host{padding:20px}.glass{padding:28px 23px}.brand{margin-bottom:25px}.symbol{width:64px;height:64px;margin-bottom:23px}.secondary{font-size:14px;margin-top:17px;margin-bottom:25px}}\n</style><iframe class=\"app-backdrop\" src=\"./pwa-ui.html\" title=\"\" sandbox=\"allow-same-origin\" tabindex=\"-1\" inert aria-hidden=\"true\"></iframe><button class=\"retry-surface\" type=\"button\" aria-label=\"연결을 다시 시도하려면 화면을 아무 곳이나 누르세요.\"></button><div class=\"scene\" aria-hidden=\"true\"></div><main class=\"glass\" role=\"alert\" aria-live=\"assertive\" aria-labelledby=\"connection-message\" aria-describedby=\"connection-guide\"><h1 class=\"brand\"></h1><div class=\"symbol\"><svg viewBox=\"0 0 32 32\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 11a20 20 0 0 1 5-3m6-1a20 20 0 0 1 13 4M8 16a13 13 0 0 1 5-2m6 0a13 13 0 0 1 5 2M12 21a7 7 0 0 1 8 0M16 26h.01M4 4l24 24\"/></svg></div><p class=\"primary\" id=\"connection-message\"></p><p class=\"secondary\" id=\"connection-guide\"></p><p class=\"retry-note\">연결을 다시 시도하려면 화면을 아무 곳이나 누르세요.</p></main>";
     const split = CONNECTION_MESSAGE.indexOf(' 네트워크');
     root.querySelector('.brand').textContent = document.title;
     root.querySelector('.primary').textContent = CONNECTION_MESSAGE.slice(0, split);
@@ -24,6 +166,7 @@
     for (const element of document.body.children) element.inert = true;
     document.body.append(overlay);
     root.querySelector('button').focus();
+    installGlassLens(root);
   }
   const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const host = document.createElement('velvitty-pwa');
