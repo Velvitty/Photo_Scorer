@@ -1,6 +1,6 @@
 /* Project-local PWA cache. Offline launches display a connection notice. */
 'use strict';
-const VERSION = "905068f2b7d4a4d6";
+const VERSION = "d04538de30e137ee";
 const APP = "Photo_Scorer";
 const CORE = ["./manifest.webmanifest", "./pwa.js", "./offline.html", "./pwa-icon-192.png", "./pwa-icon-512.png", "./pwa-icon-maskable.png", "./apple-touch-icon.png"];
 const OPTIONAL = [];
