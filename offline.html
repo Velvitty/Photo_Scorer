@@ -1,10 +1,157 @@
 <!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#181818"><title>Photo Score · 연결 확인</title><style>html{margin:0;min-height:100%;background:#181818}body{margin:0;position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;align-items:safe center;overflow:auto;box-sizing:border-box;padding:28px;background:var(--app-ui-background,#181818);color:#fff;font:16px/1.7 system-ui,-apple-system,"Noto Sans KR",sans-serif;text-align:center;isolation:isolate}
-*{box-sizing:border-box}.app-backdrop{position:fixed;inset:-5px;z-index:-2;width:calc(100% + 10px);height:calc(100% + 10px);border:0;pointer-events:none;opacity:.84;filter:none;background:transparent}.scene{position:fixed;inset:0;z-index:-1;background:transparent;backdrop-filter:blur(1.8px);-webkit-backdrop-filter:blur(1.8px);pointer-events:none}
-.glass{--lens-radius:32px;position:relative;isolation:isolate;width:min(620px,100%);padding:38px 42px 34px;border:1px solid #ffffff1a;border-radius:var(--lens-radius);background:rgb(var(--glass-rgb,255 255 255)/var(--glass-alpha,.075));backdrop-filter:blur(8.5px);-webkit-backdrop-filter:blur(8.5px);box-shadow:0 36px 88px -22px rgb(0 0 0/var(--glass-shadow-opacity,.34)),0 12px 32px -10px #0000002e,0 2px 8px -3px #0000001a,inset 0 1px 2px #ffffff30,inset 0 -1px 2px #ffffff12;pointer-events:none;filter:none;opacity:1}.lens-clip{position:absolute;inset:0;z-index:0;border-radius:inherit;overflow:hidden;pointer-events:none}.lens-optics{position:absolute;inset:0;z-index:0;border-radius:inherit;overflow:hidden;pointer-events:none;background:transparent;filter:none}.lens-copy{position:absolute;display:block;max-width:none;margin:0;padding:0;border:0;pointer-events:none;opacity:calc(1 - var(--glass-alpha,.075));background:transparent;filter:none}.glass:before{content:"";position:absolute;z-index:2;inset:0;padding:1px;border-radius:inherit;pointer-events:none;background:conic-gradient(from 142deg at 50% 50%,transparent 0deg,#ff9d7f88 9deg,#ffd17377 19deg,#a8edc777 29deg,#88dcff88 39deg,#aeb4ff88 49deg,#e0acff77 59deg,transparent 78deg,transparent 175deg,#e0acff66 190deg,#88dcff77 205deg,#a8edc766 217deg,#ffd17366 229deg,#ff9d7f66 241deg,transparent 260deg,transparent 360deg);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude}.glass:after{content:"";position:absolute;z-index:2;inset:-4px -3px -7px;border-radius:calc(var(--lens-radius) + 4px);border:1px solid #ffffff0d;box-shadow:inset 0 -2px 3px #ffffff0d;pointer-events:none}.brand{position:relative;z-index:3;margin:0 0 28px;color:#f4f4f4;font-size:13px;font-weight:500;letter-spacing:.04em;overflow-wrap:anywhere;text-shadow:0 1px 4px #0007}.symbol{position:relative;z-index:3;display:grid;place-items:center;width:72px;height:72px;margin:0 auto 26px;border:1px solid #ffffff35;border-radius:22px;background:linear-gradient(135deg,#ffffff14,#ffffff02);box-shadow:inset 0 1px 1px #ffffff70,inset 0 -2px 2px #ffffff20,0 3px 7px #0002;color:#fff}.symbol svg{width:32px;height:32px}.primary{position:relative;z-index:3;margin:0;font-size:clamp(18px,2.8vw,23px);line-height:1.75;font-weight:600;letter-spacing:-.04em;word-break:keep-all;overflow-wrap:anywhere;text-shadow:0 1px 5px #0008}.secondary{position:relative;z-index:3;margin:20px 0 29px;color:#f1f1f1;font-size:15px;line-height:1.75;word-break:keep-all;text-shadow:0 1px 4px #0007}.retry-note{position:relative;z-index:3;margin:27px 0 0;color:#e5e5e5;font-size:12px;line-height:1.8;word-break:keep-all;letter-spacing:-.02em;text-shadow:0 1px 3px #0006}.retry-surface{position:fixed;inset:0;z-index:5;width:100%;height:100%;margin:0;padding:0;border:0;background:transparent;cursor:pointer;outline:none}.retry-surface:focus-visible~.glass{outline:3px solid #fff;outline-offset:10px}
+*{box-sizing:border-box}.app-backdrop{position:fixed;inset:-5px;z-index:0;width:calc(100% + 10px);height:calc(100% + 10px);border:0;pointer-events:none;opacity:.84;filter:none;background:transparent}.scene{position:fixed;inset:0;z-index:1;background:transparent;backdrop-filter:blur(1.8px);-webkit-backdrop-filter:blur(1.8px);pointer-events:none}
+.glass{--lens-radius:32px;position:relative;z-index:2;isolation:isolate;width:min(620px,100%);padding:38px 42px 34px;border:1px solid #ffffff1a;border-radius:var(--lens-radius);background:rgb(var(--glass-rgb,255 255 255)/var(--glass-alpha,.075));backdrop-filter:blur(8.5px);-webkit-backdrop-filter:blur(8.5px);box-shadow:0 36px 88px -22px rgb(0 0 0/var(--glass-shadow-opacity,.34)),0 12px 32px -10px #0000002e,0 2px 8px -3px #0000001a,inset 0 1px 2px #ffffff30,inset 0 -1px 2px #ffffff12;pointer-events:none;filter:none;opacity:1}.lens-clip{position:absolute;inset:0;z-index:0;border-radius:inherit;overflow:hidden;pointer-events:none}.lens-optics{position:absolute;inset:0;z-index:0;border-radius:inherit;overflow:hidden;pointer-events:none;background:transparent;filter:none}.lens-copy{position:absolute;display:block;max-width:none;margin:0;padding:0;border:0;pointer-events:none;opacity:calc(1 - var(--glass-alpha,.075));background:transparent;filter:none}.glass:before{content:"";position:absolute;z-index:2;inset:0;padding:1px;border-radius:inherit;pointer-events:none;background:conic-gradient(from 142deg at 50% 50%,transparent 0deg,#ff9d7f88 9deg,#ffd17377 19deg,#a8edc777 29deg,#88dcff88 39deg,#aeb4ff88 49deg,#e0acff77 59deg,transparent 78deg,transparent 175deg,#e0acff66 190deg,#88dcff77 205deg,#a8edc766 217deg,#ffd17366 229deg,#ff9d7f66 241deg,transparent 260deg,transparent 360deg);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude}.glass:after{content:"";position:absolute;z-index:2;inset:-4px -3px -7px;border-radius:calc(var(--lens-radius) + 4px);border:1px solid #ffffff0d;box-shadow:inset 0 -2px 3px #ffffff0d;pointer-events:none}.brand{position:relative;z-index:3;margin:0 0 28px;color:#f4f4f4;font-size:13px;font-weight:500;letter-spacing:.04em;overflow-wrap:anywhere;text-shadow:0 1px 4px #0007}.symbol{position:relative;z-index:3;display:grid;place-items:center;width:72px;height:72px;margin:0 auto 26px;border:1px solid #ffffff35;border-radius:22px;background:linear-gradient(135deg,#ffffff14,#ffffff02);box-shadow:inset 0 1px 1px #ffffff70,inset 0 -2px 2px #ffffff20,0 3px 7px #0002;color:#fff}.symbol svg{width:32px;height:32px}.primary{position:relative;z-index:3;margin:0;font-size:clamp(18px,2.8vw,23px);line-height:1.75;font-weight:600;letter-spacing:-.04em;word-break:keep-all;overflow-wrap:anywhere;text-shadow:0 1px 5px #0008}.secondary{position:relative;z-index:3;margin:20px 0 29px;color:#f1f1f1;font-size:15px;line-height:1.75;word-break:keep-all;text-shadow:0 1px 4px #0007}.retry-note{position:relative;z-index:3;margin:27px 0 0;color:#e5e5e5;font-size:12px;line-height:1.8;word-break:keep-all;letter-spacing:-.02em;text-shadow:0 1px 3px #0006}.retry-surface{position:fixed;inset:0;z-index:5;width:100%;height:100%;margin:0;padding:0;border:0;background:transparent;cursor:pointer;outline:none}.retry-surface:focus-visible~.glass{outline:3px solid #fff;outline-offset:10px}
 @media(max-width:540px){body{padding:20px}.glass{padding:28px 23px}.brand{margin-bottom:25px}.symbol{width:64px;height:64px;margin-bottom:23px}.secondary{font-size:14px;margin-top:17px;margin-bottom:25px}}
 
 .glass{--lens-ink:#fff;--lens-muted:#ededed}.glass[data-surface="light"]{--lens-ink:#171717;--lens-muted:#444}.glass :is(.brand,.primary,.symbol){color:var(--lens-ink)}.glass :is(.secondary,.retry-note){color:var(--lens-muted)}.glass[data-surface="light"] :is(.brand,.primary,.secondary,.retry-note){text-shadow:none}
-</style></head><body><iframe class="app-backdrop" title="" sandbox="allow-same-origin" tabindex="-1" inert aria-hidden="true"></iframe><button class="retry-surface" type="button" onclick="location.reload()" aria-label="연결을 다시 시도하려면 화면을 아무 곳이나 누르세요."></button><div class="scene" aria-hidden="true"></div><main class="glass" role="alert" aria-live="assertive" aria-labelledby="connection-message" aria-describedby="connection-guide"><h1 class="brand">Photo Score</h1><div class="symbol"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a20 20 0 0 1 5-3m6-1a20 20 0 0 1 13 4M8 16a13 13 0 0 1 5-2m6 0a13 13 0 0 1 5 2M12 21a7 7 0 0 1 8 0M16 26h.01M4 4l24 24"/></svg></div><p class="primary" id="connection-message">인터넷 연결 상태가 불안정하여 어플리케이션을 실행할 수 없습니다.</p><p class="secondary" id="connection-guide">네트워크 환경을 확인해 주세요.</p><p class="retry-note">연결을 다시 시도하려면 화면을 아무 곳이나 누르세요.</p></main><script>function installGlassLens(root) {
+</style></head><body><iframe class="app-backdrop" title="" sandbox="allow-same-origin" tabindex="-1" inert aria-hidden="true" srcdoc="&lt;!DOCTYPE html&gt;
+&lt;html lang=&quot;ko&quot;&gt;
+&lt;head&gt;&lt;base href=&quot;./&quot;&gt;&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;none&#x27;; connect-src &#x27;none&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27; https:; img-src &#x27;self&#x27; data: https:; font-src &#x27;self&#x27; data: https:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; form-action &#x27;none&#x27;; base-uri &#x27;self&#x27;&quot;&gt;&lt;style&gt;html{pointer-events:none!important}*{animation-play-state:paused!important;caret-color:transparent!important}&lt;/style&gt;
+&lt;meta charset=&quot;UTF-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1.0&quot;&gt;
+
+
+&lt;title&gt;Photo Score — 사진 채점&lt;/title&gt;
+
+&lt;link href=&quot;https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800&amp;amp;family=Noto+Sans+KR:wght@300;400;500;700&amp;amp;display=swap&quot; rel=&quot;stylesheet&quot;&gt;
+&lt;style&gt;
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;background:#0A0A0F;font-family:&#x27;Noto Sans KR&#x27;,&#x27;Pretendard&#x27;,-apple-system,sans-serif;color:#fff;overflow-x:hidden}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes gradeIn{from{opacity:0;transform:scale(.5) rotate(-10deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes eulaFadeIn{from{opacity:0}to{opacity:1}}
+@keyframes eulaSlideUp{from{opacity:0;transform:translateY(30px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+.container{max-width:520px;margin:0 auto;padding:24px 16px 60px}
+.upload-zone{border:2px dashed rgba(255,255,255,0.1);border-radius:20px;padding:56px 32px;text-align:center;cursor:pointer;transition:all .3s;background:rgba(255,255,255,0.02);animation:fadeUp .6s ease}
+.upload-zone:hover,.upload-zone.dragover{border-color:#7CFFCB;background:rgba(124,255,203,0.04)}
+.btn-primary{padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#7CFFCB,#4AEAAA);color:#0A0A0F;font-size:15px;font-weight:700;cursor:pointer;flex:2}
+.btn-secondary{padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.6);font-size:14px;font-weight:500;cursor:pointer;flex:1}
+.btn-analyze-other{width:100%;padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.6);font-size:14px;font-weight:500;cursor:pointer}
+.tab{flex:1;padding:10px 0;text-align:center;font-size:13px;font-weight:600;cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;color:rgba(255,255,255,0.35);letter-spacing:.04em;transition:all .2s}
+.tab.active{color:#fff;border-bottom-color:#7CFFCB}
+.card{background:rgba(255,255,255,0.02);border-radius:16px;border:1px solid rgba(255,255,255,0.05);padding:20px;margin-bottom:16px}
+.tag{font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.4);display:inline-block}
+.minibar-track{width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,0.06);overflow:hidden}
+.minibar-fill{height:100%;border-radius:3px;width:0;transition:width 1s cubic-bezier(.22,1,.36,1)}
+/* EULA */
+.eula-overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(20,20,30,.97);backdrop-filter:blur(20px);animation:eulaFadeIn .4s ease}
+.eula-box{width:92%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;background:linear-gradient(160deg,rgba(30,30,45,.95),rgba(15,15,25,.98));border-radius:20px;border:1px solid rgba(255,255,255,.06);box-shadow:0 30px 80px rgba(0,0,0,.6);animation:eulaSlideUp .5s ease .15s both;overflow:hidden}
+.eula-header{padding:28px 28px 16px;text-align:center;border-bottom:1px solid rgba(255,255,255,.04)}
+.eula-content{padding:28px;overflow-y:auto;flex:1;line-height:1.7}
+.eula-section h3{font-size:14px;font-weight:700;color:#7CFFCB;margin-bottom:8px}
+.eula-section p{font-size:12px;color:rgba(255,255,255,.45);margin-bottom:16px}
+.eula-footer{padding:20px 28px 24px;border-top:1px solid rgba(255,255,255,.04);display:flex;flex-direction:column;gap:12px}
+.eula-check{display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;color:rgba(255,255,255,.5);padding:6px 0}
+.eula-check input{appearance:none;width:18px;height:18px;border-radius:5px;border:1.5px solid rgba(255,255,255,.15);background:rgba(255,255,255,.03);cursor:pointer;position:relative;flex-shrink:0}
+.eula-check input:checked{border-color:transparent;background:linear-gradient(135deg,#7CFFCB,#4AEAAA)}
+.eula-check input:checked::after{content:&#x27;✓&#x27;;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#0A0A0F;font-size:12px;font-weight:800}
+
+.btn-eula-accept{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#7CFFCB,#4AEAAA);color:#0A0A0F;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-eula-accept:disabled{opacity:.3;cursor:not-allowed}
+.btn-eula-decline{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.06);background:transparent;color:rgba(255,255,255,.3);font-size:12px;cursor:pointer}
+.btn-eula-close{width:100%;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#7CFFCB,#4AEAAA);color:#0A0A0F;font-size:14px;font-weight:700;cursor:pointer}
+#loading-overlay{position:absolute;inset:0;background:rgba(10,10,15,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;backdrop-filter:blur(8px);display:none}
+.spinner{width:48px;height:48px;border-radius:50%;border:3px solid rgba(124,255,203,.2);border-top-color:#7CFFCB;animation:spin .8s linear infinite}
+.hidden{display:none!important}
+&lt;/style&gt;
+&lt;meta name=&quot;theme-color&quot; content=&quot;#0a0a0f&quot;&gt;
+
+
+
+&lt;meta name=&quot;mobile-web-app-capable&quot; content=&quot;yes&quot;&gt;
+&lt;meta name=&quot;apple-mobile-web-app-capable&quot; content=&quot;yes&quot;&gt;
+&lt;meta name=&quot;apple-mobile-web-app-status-bar-style&quot; content=&quot;default&quot;&gt;
+
+
+&lt;/head&gt;
+&lt;body inert&gt;
+
+
+&lt;div id=&quot;eula-modal&quot; class=&quot;eula-overlay&quot;&gt;
+  &lt;div class=&quot;eula-box&quot;&gt;
+    &lt;div class=&quot;eula-header&quot;&gt;
+      &lt;h2 style=&quot;font-size:22px;font-weight:800;background:linear-gradient(135deg,#7CFFCB,#72B8FF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:&amp;#x27;Playfair Display&amp;#x27;,serif&quot;&gt;사용권 계약서&lt;/h2&gt;
+      &lt;p style=&quot;font-size:12px;color:rgba(255,255,255,.35);letter-spacing:.05em;margin-top:4px&quot;&gt;Software End-User License Agreement (EULA)&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;eula-content&quot;&gt;
+      &lt;div class=&quot;eula-section&quot;&gt;&lt;h3&gt;1. 사용권 허여&lt;/h3&gt;&lt;p&gt;본 소프트웨어는 개인적, 교육적, 비영리 목적으로만 사용이 허가됩니다. 사용자에게 비독점적, 양도 불가능한 제한적 사용권이 부여됩니다.&lt;/p&gt;&lt;/div&gt;
+      &lt;div class=&quot;eula-section&quot;&gt;&lt;h3&gt;2. 사용 제한&lt;/h3&gt;&lt;p&gt;다음 행위는 엄격히 금지됩니다: 본 소프트웨어의 무단 배포, 복제 또는 전송 / 소스 코드의 수정 후 재배포 / 상업적 목적의 사용 / 본 소프트웨어를 이용한 유료 서비스 제공 / 타인에게 재판매 또는 서브라이선스 부여&lt;/p&gt;&lt;/div&gt;
+      &lt;div class=&quot;eula-section&quot;&gt;&lt;h3&gt;3. 저작권&lt;/h3&gt;&lt;p&gt;본 소프트웨어의 모든 지적재산권은 저작권자에게 귀속됩니다. Copyright © 2026 Velvitty(연이-Yeony). All Rights Reserved.&lt;/p&gt;&lt;/div&gt;
+      &lt;div class=&quot;eula-section&quot;&gt;&lt;h3&gt;4. 보증 부인 및 책임 제한&lt;/h3&gt;&lt;p&gt;본 소프트웨어는 &quot;있는 그대로(AS IS)&quot; 제공됩니다. 저작권자는 소프트웨어의 사용으로 인한 어떠한 직접적, 간접적, 부수적 또는 결과적 손해에 대해서도 책임을 지지 않습니다.&lt;/p&gt;&lt;/div&gt;
+      &lt;div class=&quot;eula-section&quot;&gt;&lt;h3&gt;5. 데이터 처리&lt;/h3&gt;&lt;p&gt;본 소프트웨어는 사용자의 사진을 브라우저 내에서만 처리하며, 어떠한 데이터도 외부 서버로 전송하지 않습니다. 모든 분석은 사용자의 기기에서 로컬로 수행됩니다.&lt;/p&gt;&lt;/div&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;eula-footer&quot; id=&quot;eula-footer-checks&quot;&gt;
+      &lt;label class=&quot;eula-check&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;eula-cb&quot;&gt;위 사용권 계약의 모든 조항을 읽고 이해하였습니다&lt;/label&gt;
+      &lt;label class=&quot;eula-check&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;eula-cb&quot;&gt;사용 제한 사항을 준수할 것에 동의합니다&lt;/label&gt;
+      &lt;label class=&quot;eula-check&quot;&gt;&lt;input type=&quot;checkbox&quot; class=&quot;eula-cb&quot;&gt;데이터 처리 방식에 동의합니다&lt;/label&gt;
+      &lt;button class=&quot;btn-eula-accept&quot; id=&quot;btn-accept&quot; disabled&gt;동의하고 시작하기&lt;/button&gt;
+      &lt;button class=&quot;btn-eula-decline&quot;&gt;동의하지 않음&lt;/button&gt;
+    &lt;/div&gt;
+    
+    &lt;div class=&quot;eula-footer hidden&quot; id=&quot;eula-footer-review&quot;&gt;
+      &lt;button class=&quot;btn-eula-close&quot;&gt;닫기&lt;/button&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+
+&lt;div id=&quot;declined-screen&quot; class=&quot;hidden&quot; style=&quot;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px&quot;&gt;
+  &lt;div style=&quot;font-size:64px;margin-bottom:20px&quot;&gt;🚫&lt;/div&gt;
+  &lt;h2 style=&quot;font-size:20px;font-weight:700;color:rgba(255,255,255,.7);margin-bottom:12px&quot;&gt;사용권 계약에 동의하지 않으셨습니다&lt;/h2&gt;
+  &lt;p style=&quot;font-size:13px;color:rgba(255,255,255,.35);margin-bottom:24px;line-height:1.7&quot;&gt;본 소프트웨어를 사용하려면 사용권 계약에 동의해야 합니다.&lt;/p&gt;
+  &lt;button style=&quot;padding:12px 32px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:rgba(255,255,255,.6);font-size:14px;cursor:pointer&quot;&gt;다시 시도&lt;/button&gt;
+&lt;/div&gt;
+
+
+&lt;div id=&quot;main-app&quot; class=&quot;hidden&quot;&gt;
+  
+  &lt;div style=&quot;padding:28px 24px 16px;text-align:center;border-bottom:1px solid rgba(255,255,255,.04);background:linear-gradient(180deg,rgba(124,255,203,.03) 0%,transparent 100%)&quot;&gt;
+    &lt;div style=&quot;display:flex;align-items:center;justify-content:center;gap:12px&quot;&gt;
+      &lt;span style=&quot;font-size:28px&quot;&gt;📷&lt;/span&gt;
+      &lt;h1 style=&quot;font-size:26px;font-weight:800;letter-spacing:-.02em;font-family:&amp;#x27;Playfair Display&amp;#x27;,serif;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,.6) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent&quot;&gt;Photo Score&lt;/h1&gt;
+    &lt;/div&gt;
+    &lt;p style=&quot;font-size:12px;color:rgba(255,255,255,.3);margin-top:6px;letter-spacing:.05em&quot;&gt;로그인 불필요 · 100% 브라우저 분석 · 사진이 서버로 전송되지 않습니다&lt;/p&gt;
+  &lt;/div&gt;
+
+  &lt;div class=&quot;container&quot;&gt;
+    
+    &lt;div id=&quot;upload-area&quot; class=&quot;upload-zone&quot;&gt;
+      &lt;input type=&quot;file&quot; id=&quot;file-input&quot; accept=&quot;image/*&quot; hidden&gt;
+      &lt;div style=&quot;font-size:48px;margin-bottom:16px;opacity:.6&quot;&gt;🖼️&lt;/div&gt;
+      &lt;p style=&quot;font-size:16px;font-weight:500;color:rgba(255,255,255,.7)&quot;&gt;사진을 드래그하거나 클릭하여 업로드&lt;/p&gt;
+      &lt;p style=&quot;font-size:12px;color:rgba(255,255,255,.25);margin-top:8px&quot;&gt;JPG, PNG, WEBP · 계정 불필요 · 무료&lt;/p&gt;
+    &lt;/div&gt;
+
+    
+    &lt;div id=&quot;preview-area&quot; class=&quot;hidden&quot; style=&quot;animation:fadeUp .5s ease&quot;&gt;
+      &lt;div style=&quot;border-radius:16px;overflow:hidden;position:relative;box-shadow:0 20px 60px rgba(0,0,0,.5)&quot;&gt;
+        &lt;img id=&quot;preview-img&quot; style=&quot;width:100%;max-height:400px;object-fit:cover;display:block&quot;&gt;
+        &lt;div id=&quot;loading-overlay&quot;&gt;&lt;div class=&quot;spinner&quot;&gt;&lt;/div&gt;&lt;p style=&quot;font-size:14px;color:rgba(255,255,255,.7);animation:pulse 1.5s infinite&quot;&gt;픽셀 데이터 분석 중...&lt;/p&gt;&lt;/div&gt;
+      &lt;/div&gt;
+      &lt;div style=&quot;display:flex;gap:10px;margin-top:16px&quot;&gt;
+        &lt;button class=&quot;btn-secondary&quot;&gt;다시 선택&lt;/button&gt;
+        &lt;button class=&quot;btn-primary&quot; id=&quot;btn-analyze&quot;&gt;✨ 분석 시작&lt;/button&gt;
+      &lt;/div&gt;
+    &lt;/div&gt;
+
+    
+    &lt;div id=&quot;result-area&quot; class=&quot;hidden&quot; style=&quot;animation:fadeUp .6s ease&quot;&gt;&lt;/div&gt;
+  &lt;/div&gt;
+
+  
+  &lt;div style=&quot;text-align:center;padding:24px 16px 40px;border-top:1px solid rgba(255,255,255,.04);max-width:520px;margin:0 auto&quot;&gt;
+    &lt;p style=&quot;font-size:11px;color:rgba(255,255,255,.2);margin-bottom:8px&quot;&gt;Copyright © 2026 &lt;strong style=&quot;color:rgba(255,255,255,.35)&quot;&gt;Velvitty(연이-Yeony)&lt;/strong&gt;. All Rights Reserved.&lt;/p&gt;
+    &lt;p style=&quot;font-size:10px;color:rgba(255,255,255,.15);margin-bottom:12px;line-height:1.6&quot;&gt;개인적/비영리 학습 및 연구 목적으로만 사용 가능합니다. 배포, 재판매, 상업적 이용은 엄격히 금지됩니다.&lt;/p&gt;
+    &lt;button style=&quot;padding:8px 18px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:rgba(255,255,255,.35);font-size:11px;cursor:pointer&quot;&gt;사용권 계약서 다시 보기&lt;/button&gt;
+    &lt;p style=&quot;font-size:9px;color:rgba(255,255,255,.1);margin-top:8px&quot;&gt;본 소프트웨어의 사용은 사용권 계약에 대한 동의를 의미합니다.&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+
+
+&lt;/body&gt;
+&lt;/html&gt;"></iframe><button class="retry-surface" type="button" onclick="location.reload()" aria-label="연결을 다시 시도하려면 화면을 아무 곳이나 누르세요."></button><div class="scene" aria-hidden="true"></div><main class="glass" role="alert" aria-live="assertive" aria-labelledby="connection-message" aria-describedby="connection-guide"><h1 class="brand">Photo Score</h1><div class="symbol"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11a20 20 0 0 1 5-3m6-1a20 20 0 0 1 13 4M8 16a13 13 0 0 1 5-2m6 0a13 13 0 0 1 5 2M12 21a7 7 0 0 1 8 0M16 26h.01M4 4l24 24"/></svg></div><p class="primary" id="connection-message">인터넷 연결 상태가 불안정하여 어플리케이션을 실행할 수 없습니다.</p><p class="secondary" id="connection-guide">네트워크 환경을 확인해 주세요.</p><p class="retry-note">연결을 다시 시도하려면 화면을 아무 곳이나 누르세요.</p></main><script>function installGlassLens(root) {
   const doc = root.ownerDocument || root;
   const glass = root.querySelector('.glass');
   const backdrop = root.querySelector('.app-backdrop');
